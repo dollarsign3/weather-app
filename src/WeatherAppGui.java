@@ -1,12 +1,19 @@
 import java.awt.Cursor;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import org.json.simple.JSONObject;
+
 public class WeatherAppGui extends JFrame{
+
+    private JSONObject weatherData;
+
     public WeatherAppGui(){
 
         super("Weather App");
@@ -42,18 +49,9 @@ public class WeatherAppGui extends JFrame{
 
         add(searchTextField);
         
-
-        //search button
-        JButton searchButton = new JButton(loadImage("src/assets/search.png"));
-
-        // change the cursor to a hand cursor when hovering over this button
-        searchButton.setCursor(Cursor.getPredefinedCursor(HAND_CURSOR));
-        searchButton.setBounds(375, 13, 47, 45);
-        add(searchButton);
-
         // weather condition image
         JLabel weatherConditionImage = new JLabel(loadImage("src/assets/cloudy.png"));
-        weatherConditionImage.setBounds(0, 125, 450, 217);
+        weatherConditionImage.setBounds(0, 100, 450, 217);
         add(weatherConditionImage);
 
         // temperature text
@@ -93,6 +91,67 @@ public class WeatherAppGui extends JFrame{
         windspeedText.setBounds(310, 500, 90, 55);
         windspeedText.setFont(new Font("Dialog", Font.PLAIN, 16));
         add(windspeedText);
+
+        //search button
+        JButton searchButton = new JButton(loadImage("src/assets/search.png"));
+
+        // change the cursor to a hand cursor when hovering over this button
+        searchButton.setCursor(Cursor.getPredefinedCursor(HAND_CURSOR));
+        searchButton.setBounds(375, 13, 47, 45);
+        searchButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e){
+                // get location from the user
+                String userInput = searchTextField.getText();
+
+                // validate input - remove whitespace to ensure non-empty text
+                if(userInput.replaceAll("\\s", "").length() <= 0){
+                    return;
+                }
+
+                // retrieve weather data
+                weatherData = WeatherApp.getWeatherData(userInput);
+
+                // update GUI
+
+                // update weather image
+                String weatherCondition = (String) weatherData.get("weather_condition");
+
+                // depending on the condition, will update the weather image that corresponds with the condition
+                switch (weatherCondition){
+                    case "Clear":
+                        weatherConditionImage.setIcon(loadImage("src/assets/clear.png"));
+                        break;
+                    case "Cloudy":
+                        weatherConditionImage.setIcon(loadImage("src/assets/cloudy.png"));
+                        break;
+                    case "Rain":
+                        weatherConditionImage.setIcon(loadImage("src/assets/rain.png"));
+                        break;
+                    case "Snow":
+                        weatherConditionImage.setIcon(loadImage("src/assets/snow.png"));
+                        break;
+                }
+
+                // update the temperature text
+                double temperature = (double) weatherData.get("temperature");
+                temperatureText.setText(temperature + "C");
+
+                // update weather condition text
+                weatherConditionDesc.setText(weatherCondition);
+
+                //update the humidity text
+                long humidity = (long) weatherData.get("humidity");
+                humidityText.setText("<html><b>Humidity</b><br>" + humidity + "%</html>");
+
+                //update the windspeed text
+                double windspeed = (double) weatherData.get("windspeed");
+                windspeedText.setText("<html><b>Windspeed</b><br>" + windspeed + "km/h</html>");
+
+
+            }
+        });
+        add(searchButton);
     }
 
     // To create images in the gui component
